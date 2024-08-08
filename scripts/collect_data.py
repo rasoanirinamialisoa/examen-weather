@@ -13,7 +13,7 @@ url = f'https://api.openweathermap.org/data/2.5/air_pollution/history?lat={lat}&
 # Fonction pour récupérer les données
 def fetch_data(url):
     response = requests.get(url)
-    response.raise_for_status()  # Lancer une exception en cas de réponse non valide
+    response.raise_for_status()
     return response.json()
 
 # Fonction pour transformer les données JSON en DataFrame
