@@ -21,7 +21,10 @@ cities = [
 ]
 
 def fetch_data(url, lat, lon, start, end, api_key):
-    formatted_url = url.format(lat=lat, lon=lon, start=start, end=end, api_key=api_key)
+    start_timestamp = int(start.timestamp())
+    end_timestamp = int(end.timestamp())
+    formatted_url = url.format(lat=lat, lon=lon, start=start_timestamp, end=end_timestamp, api_key=api_key)
+    print(f"Request URL: {formatted_url}")  
     response = requests.get(formatted_url)
     response.raise_for_status()
     return response.json()
@@ -30,9 +33,9 @@ def transform_data(data, city_name):
     records = []
     for item in data.get('list', []):
         timestamp = item.get('dt')
-        date_time = datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+        date_time = datetime.utcfromtimestamp(timestamp)
         record = {
-            'date_time': date_time,
+            'date_time': date_time.strftime('%Y-%m-%d %H:%M:%S'),
             'aqi': item.get('main', {}).get('aqi'),
             'co': item.get('components', {}).get('co'),
             'no': item.get('components', {}).get('no'),
@@ -45,7 +48,14 @@ def transform_data(data, city_name):
             'Location': city_name
         }
         records.append(record)
-    return pd.DataFrame(records)
+    
+    df = pd.DataFrame(records)
+    df['date'] = pd.to_datetime(df['date_time']).dt.date
+    df['hour'] = pd.to_datetime(df['date_time']).dt.hour
+    
+    df = df[df['hour'] == 12].drop(['hour'], axis=1)
+    
+    return df
 
 def combine_data(pollution_df, demo_geo_df):
     final_combined_data = pd.merge(pollution_df, demo_geo_df, on='Location', how='left')
@@ -53,8 +63,8 @@ def combine_data(pollution_df, demo_geo_df):
 
 def main():
     api_key = '0bc2a0cd6a0e1cde97a84544805bc849'
-    start = '1704078000'
-    end = '1735606500'
+    start = datetime(2024, 1, 1, 0, 0, 0)
+    end = datetime(2024, 12, 31, 23, 59, 59)
 
     if not os.path.exists('../data'):
         os.makedirs('../data')
