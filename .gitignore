@@ -1,1 +1,9 @@
 examen-données2/
+key/
+logs/
+airflow.cfg
+airflow.db
+webserver_config.py
+standalone_admin_password.txt
+_pycache_/
+
